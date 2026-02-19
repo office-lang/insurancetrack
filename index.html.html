@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InsureTrack Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#070d1a; --s1:#0d1526; --s2:#111d30; --s3:#162038;
+  --border:#1c2d45; --border2:#243550;
+  --accent:#00e5b8; --accent2:#3b9eff; --accent3:#a855f7;
+  --danger:#ff4060; --success:#22d37a; --warning:#ffb020;
+  --text:#dde8f5; --muted:#4d6585; --muted2:#7a9ab8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--s1);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,229,184,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,184,0.03) 1px,transparent 1px);background-size:40px 40px;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;width:600px;height:600px;background:radial-gradient(ellipse,rgba(59,158,255,0.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+/* ── SETUP SCREEN ── */
+#setupScreen{display:none;position:fixed;inset:0;background:var(--bg);z-index:999;align-items:center;justify-content:center;padding:20px;}
+#setupScreen.open{display:flex;}
+.setup-box{background:var(--s1);border:1px solid var(--border2);border-radius:24px;padding:40px;width:100%;max-width:560px;box-shadow:0 30px 80px rgba(0,0,0,0.6);}
+.setup-box h2{font-size:22px;font-weight:700;margin-bottom:8px;}
+.setup-box .sdesc{color:var(--muted2);font-size:13px;margin-bottom:28px;line-height:1.6;}
+.step{display:flex;gap:12px;align-items:flex-start;margin-bottom:20px;padding:14px;background:var(--s2);border-radius:12px;border:1px solid var(--border);}
+.step-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.step-body h4{font-size:13px;font-weight:600;margin-bottom:3px;}
+.step-body p{font-size:12px;color:var(--muted2);line-height:1.5;}
+.step-body code{background:var(--s3);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
+
+/* ── LOGIN ── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;position:relative;z-index:10;}
+.login-wrap{display:flex;gap:48px;align-items:center;max-width:900px;width:100%;}
+.login-hero{flex:1;display:none;}
+@media(min-width:900px){.login-hero{display:block;}}
+.login-hero h1{font-size:40px;font-weight:700;line-height:1.2;margin-bottom:16px;}
+.login-hero h1 span{color:var(--accent);}
+.login-hero p{color:var(--muted2);font-size:14px;line-height:1.7;}
+.hero-feats{margin-top:24px;display:flex;flex-direction:column;gap:8px;}
+.hero-feat{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted2);}
+.hero-feat::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.login-box{background:var(--s1);border:1px solid var(--border2);border-radius:24px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 30px 80px rgba(0,0,0,0.6);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.logo-icon{width:50px;height:50px;margin:0 auto 12px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.login-logo h2{font-size:20px;font-weight:700;}
+.login-logo p{color:var(--muted2);font-size:12px;margin-top:3px;}
+.role-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:22px;background:var(--bg);border-radius:12px;padding:4px;}
+.role-tab{padding:9px;border:none;background:transparent;color:var(--muted2);border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all 0.2s;}
+.role-tab.active{background:linear-gradient(135deg,var(--accent),#00c49a);color:#000;font-weight:600;}
+.db-status{display:flex;align-items:center;gap:6px;font-size:11px;padding:8px 12px;border-radius:8px;margin-bottom:16px;}
+.db-status.ok{background:rgba(34,211,122,0.08);color:var(--success);border:1px solid rgba(34,211,122,0.15);}
+.db-status.err{background:rgba(255,64,96,0.08);color:var(--danger);border:1px solid rgba(255,64,96,0.15);}
+.db-status.checking{background:rgba(255,176,32,0.08);color:var(--warning);border:1px solid rgba(255,176,32,0.15);}
+.db-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ok .db-dot{background:var(--success);}
+.err .db-dot{background:var(--danger);}
+.checking .db-dot{background:var(--warning);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* FORM */
+.fg{margin-bottom:15px;}
+.fg label{display:block;font-size:11px;font-weight:600;color:var(--muted2);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;}
+input,select,textarea{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:all 0.2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,184,0.08);}
+select option{background:var(--s2);}
+textarea{resize:vertical;}
+.err-msg{color:var(--danger);font-size:12px;margin-top:8px;text-align:center;}
+.btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),#00c49a);border:none;border-radius:10px;color:#000;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,229,184,0.25);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.btn-sm{width:auto;padding:7px 14px;font-size:12px;border-radius:8px;}
+.btn-xs{width:auto;padding:5px 10px;font-size:11px;border-radius:6px;}
+.btn-red{background:linear-gradient(135deg,var(--danger),#cc0033);color:#fff;}
+.btn-blue{background:linear-gradient(135deg,var(--accent2),#1a7ee6);color:#fff;}
+.btn-orange{background:linear-gradient(135deg,var(--warning),#e0900a);color:#000;}
+.btn-ghost{background:rgba(255,255,255,0.04);border:1px solid var(--border2);color:var(--text);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);box-shadow:none;}
+
+/* APP */
+#app{display:none;position:relative;z-index:5;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(13,21,38,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.topbar-l{display:flex;align-items:center;gap:12px;}
+.tl-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.tl-name{font-size:15px;font-weight:700;}
+.tl-sub{font-size:11px;color:var(--muted2);}
+.topbar-r{display:flex;align-items:center;gap:10px;}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;}
+.badge-branch{background:rgba(0,229,184,0.1);color:var(--accent);border:1px solid rgba(0,229,184,0.2);}
+.badge-admin{background:rgba(59,158,255,0.1);color:var(--accent2);border:1px solid rgba(59,158,255,0.2);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;display:inline-block;margin-right:4px;}
+
+/* SIDEBAR */
+.app-body{display:flex;min-height:calc(100vh - 57px);}
+.sidebar{width:220px;background:var(--s1);border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;}
+.nav-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;padding:8px 10px 4px;margin-top:8px;}
+.nav-label:first-child{margin-top:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted2);transition:all 0.15s;border:none;background:transparent;width:100%;text-align:left;font-family:'DM Sans',sans-serif;}
+.nav-item:hover{background:var(--s2);color:var(--text);}
+.nav-item.active{background:rgba(0,229,184,0.08);color:var(--accent);border:1px solid rgba(0,229,184,0.12);}
+.nav-item .ni{font-size:15px;width:20px;text-align:center;}
+.content{flex:1;padding:28px;overflow-x:hidden;}
+
+/* KPI */
+.page-header{margin-bottom:24px;}
+.page-header h2{font-size:22px;font-weight:700;letter-spacing:-0.4px;}
+.page-header p{color:var(--muted2);font-size:13px;margin-top:4px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:24px;}
+.kpi-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;}
+.kpi-card:hover{transform:translateY(-2px);border-color:var(--border2);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-card.c1::before{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.kpi-card.c2::before{background:linear-gradient(90deg,var(--success),#00a855);}
+.kpi-card.c3::before{background:linear-gradient(90deg,var(--danger),#cc0033);}
+.kpi-card.c4::before{background:linear-gradient(90deg,var(--accent2),var(--accent3));}
+.kpi-card.c5::before{background:linear-gradient(90deg,var(--warning),#f97316);}
+.kpi-card.c6::before{background:linear-gradient(90deg,var(--accent3),#ec4899);}
+.kpi-lbl{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;}
+.kpi-val{font-size:34px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.kpi-card.c1 .kpi-val{color:var(--accent);}
+.kpi-card.c2 .kpi-val{color:var(--success);}
+.kpi-card.c3 .kpi-val{color:var(--danger);}
+.kpi-card.c4 .kpi-val{color:var(--accent2);}
+.kpi-card.c5 .kpi-val{color:var(--warning);}
+.kpi-card.c6 .kpi-val{color:var(--accent3);}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:6px;}
+.kpi-trend{position:absolute;top:18px;right:18px;font-size:18px;}
+
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+.chart-grid-3{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:24px;}
+.chart-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:22px;}
+.chart-card.full{grid-column:1/-1;}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.chart-sub{font-size:11px;color:var(--muted2);margin-bottom:18px;}
+
+/* TABLE */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;}
+.card-title{font-size:14px;font-weight:600;}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.filters{display:flex;gap:10px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--border);}
+.filters input,.filters select{width:auto;flex:1;min-width:140px;padding:8px 12px;font-size:13px;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{padding:11px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);}
+td{padding:13px 16px;font-size:13px;border-bottom:1px solid rgba(28,45,69,0.6);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.015);}
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.pill-yes{background:rgba(34,211,122,0.1);color:var(--success);border:1px solid rgba(34,211,122,0.2);}
+.pill-no{background:rgba(255,64,96,0.1);color:var(--danger);border:1px solid rgba(255,64,96,0.2);}
+.eid{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);}
+.eid-masked{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted2);letter-spacing:1px;}
+.empty{text-align:center;padding:52px;color:var(--muted);}
+.empty .eico{font-size:40px;margin-bottom:10px;}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 7px;border-radius:5px;transition:all 0.15s;font-size:13px;}
+.del-btn:hover{color:var(--danger);background:rgba(255,64,96,0.1);}
+
+/* BRANCH FORM */
+.branch-form-wrap{max-width:720px;margin:0 auto;}
+.form-card{background:var(--s1);border:1px solid var(--border);border-radius:18px;padding:32px;}
+.form-card h3{font-size:18px;font-weight:700;margin-bottom:4px;}
+.form-card .fc-sub{color:var(--muted2);font-size:13px;margin-bottom:24px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.avail-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.avail-btn{padding:11px;border:1px solid var(--border2);background:transparent;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted2);transition:all 0.2s;text-align:center;}
+.avail-btn.yes.on{background:rgba(34,211,122,0.08);border-color:var(--success);color:var(--success);}
+.avail-btn.no.on{background:rgba(255,64,96,0.08);border-color:var(--danger);color:var(--danger);}
+
+/* FIELD TYPES */
+.field-type-badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace;text-transform:uppercase;}
+.ft-text{background:rgba(0,229,184,0.1);color:var(--accent);}
+.ft-number{background:rgba(59,158,255,0.1);color:var(--accent2);}
+.ft-select{background:rgba(168,85,247,0.1);color:var(--accent3);}
+.ft-date{background:rgba(255,176,32,0.1);color:var(--warning);}
+.ft-textarea{background:rgba(34,211,122,0.1);color:var(--success);}
+.ft-yesno{background:rgba(255,64,96,0.1);color:var(--danger);}
+
+/* SETTINGS */
+.settings-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.scard{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.scard.wide{grid-column:1/-1;}
+.scard h3{font-size:14px;font-weight:600;margin-bottom:3px;}
+.scard .sdesc{font-size:12px;color:var(--muted2);margin-bottom:18px;line-height:1.5;}
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.list-box{max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;}
+.list-item{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid rgba(28,45,69,0.5);font-size:13px;}
+.list-item:last-child{border-bottom:none;}
+.list-item:hover{background:rgba(255,255,255,0.02);}
+.li-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:22px;}
+.li-name{flex:1;}
+.li-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:12px;transition:all 0.15s;}
+.li-del:hover{color:var(--danger);background:rgba(255,64,96,0.1);}
+.add-row{display:flex;gap:8px;}
+.add-row input{flex:1;}
+.add-row button{width:auto;padding:10px 14px;font-size:13px;}
+.fb{font-size:12px;min-height:16px;margin-top:6px;}
+.fb.ok{color:var(--success);}
+.fb.er{color:var(--danger);}
+
+/* FIELD BUILDER */
+.field-builder-list{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;}
+.fb-item{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(28,45,69,0.5);background:var(--s1);transition:background 0.15s;}
+.fb-item:last-child{border-bottom:none;}
+.fb-item:hover{background:var(--s2);}
+.fb-label{flex:1;font-size:13px;font-weight:500;}
+.fb-meta{display:flex;align-items:center;gap:6px;}
+.fb-actions{display:flex;gap:4px;}
+.fb-fixed{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;background:var(--s3);padding:2px 7px;border-radius:4px;}
+.fb-req{font-size:10px;color:var(--warning);}
+
+/* ANALYTICS */
+.top-list{list-style:none;}
+.top-list li{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(28,45,69,0.5);font-size:13px;}
+.top-list li:last-child{border-bottom:none;}
+.top-list .rank{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);width:20px;}
+.top-list .tname{flex:1;margin:0 10px;font-size:12px;}
+.top-list .cnt{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);}
+.bar-bg{height:4px;background:var(--border);border-radius:2px;margin-top:3px;}
+.bar-fill{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--muted2);gap:12px;font-size:14px;}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--border2);border-radius:18px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,0.7);}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:6px;}
+.modal .mdesc{font-size:13px;color:var(--muted2);margin-bottom:20px;}
+.modal-btns{display:flex;gap:8px;margin-top:20px;justify-content:flex-end;}
+.modal-btns button{width:auto;padding:9px 18px;font-size:13px;}
+
+/* SUPABASE CONFIG */
+.config-box{background:var(--s2);border:1px solid var(--border2);border-radius:12px;padding:16px;margin-bottom:16px;}
+.config-box code{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);word-break:break-all;}
+
+.export-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(0,229,184,0.06);border:1px solid rgba(0,229,184,0.18);border-radius:8px;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.export-btn:hover{background:rgba(0,229,184,0.12);}
+.restore-label{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+.restore-label:hover{border-color:var(--accent2);color:var(--accent2);}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:13px 18px;border-radius:12px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;transform:translateY(70px);opacity:0;transition:all 0.3s;z-index:999;background:var(--success);color:#000;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.red{background:var(--danger);color:#fff;}
+.toast.warn{background:var(--warning);color:#000;}
+
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .chart-grid,.chart-grid-3,.settings-layout{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .scard.wide,.chart-card.full{grid-column:1;}
+  .content{padding:16px;}
+  .topbar{padding:12px 16px;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SUPABASE SETUP WIZARD ══ -->
+<div id="setupScreen">
+  <div class="setup-box">
+    <h2>🔧 Connect to Supabase</h2>
+    <p class="sdesc">Enter your Supabase project credentials below. You only do this once — they'll be saved in this file.</p>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Create a free Supabase project</h4>
+        <p>Go to <code>supabase.com</code> → New Project → choose a name and password → wait ~2 minutes for it to start.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Run the database setup SQL</h4>
+        <p>In Supabase → SQL Editor → paste and run the SQL from the <code>database_setup.sql</code> file included with this download.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Get your credentials</h4>
+        <p>Go to Project Settings → API → copy your <code>Project URL</code> and <code>anon public</code> key below.</p>
+      </div>
+    </div>
+    <div class="fg"><label>Supabase Project URL</label><input type="text" id="sw_url" placeholder="https://xxxxxxxxxxxx.supabase.co"></div>
+    <div class="fg"><label>Supabase Anon Key</label><input type="text" id="sw_key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
+    <div id="sw_err" class="err-msg"></div>
+    <button class="btn" onclick="saveSupabaseConfig()" style="margin-top:8px;">Connect & Continue →</button>
+  </div>
+</div>
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-hero">
+      <h1>Branch Inquiry<br><span>Intelligence</span><br>Platform</h1>
+      <p>Centralized insurance inquiry tracking with real-time sync across all branches.</p>
+      <div class="hero-feats">
+        <div class="hero-feat">Real-time central database (Supabase)</div>
+        <div class="hero-feat">All 50 branches → one admin view</div>
+        <div class="hero-feat">Live KPI dashboard & analytics</div>
+        <div class="hero-feat">Dynamic form fields, fully configurable</div>
+        <div class="hero-feat">EID masked in display, secured in DB</div>
+      </div>
+    </div>
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="logo-icon">🛡️</div>
+        <h2 id="loginTitle">InsureTrack Pro</h2>
+        <p id="loginSub">Insurance Inquiry Management</p>
+      </div>
+      <div id="dbStatus" class="db-status checking"><div class="db-dot"></div><span id="dbStatusTxt">Checking database connection...</span></div>
+      <div class="role-tabs">
+        <button class="role-tab active" onclick="setRole('branch')">🏢 Branch</button>
+        <button class="role-tab" onclick="setRole('admin')">🔐 Admin</button>
+      </div>
+      <div id="bFields">
+        <div class="fg"><label>Branch</label><select id="lBranch"></select></div>
+        <div class="fg"><label>Password</label><input type="password" id="bPass" placeholder="Branch password"></div>
+      </div>
+      <div id="aFields" style="display:none">
+        <div class="fg"><label>Username</label><input type="text" id="aUser" placeholder="Admin username"></div>
+        <div class="fg"><label>Password</label><input type="password" id="aPass" placeholder="Admin password"></div>
+      </div>
+      <button class="btn" onclick="login()" id="loginBtn">Sign In →</button>
+      <div id="loginErr" class="err-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="tl-icon">🛡️</div>
+      <div><div class="tl-name" id="tName">InsureTrack Pro</div><div class="tl-sub" id="tSub"></div></div>
+    </div>
+    <div class="topbar-r">
+      <span><span class="live-dot"></span><span style="font-size:11px;color:var(--success)">Live</span></span>
+      <span id="roleBadge" class="badge"></span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="app-body">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="content">
+      <div id="pgBranchForm" style="display:none"></div>
+      <div id="pgDashboard" style="display:none"></div>
+      <div id="pgAnalytics" style="display:none"></div>
+      <div id="pgRecords" style="display:none"></div>
+      <div id="pgFields" style="display:none"></div>
+      <div id="pgSettings" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FIELD MODAL -->
+<div class="modal-bg" id="fieldModal">
+  <div class="modal">
+    <h3 id="fmTitle">Add Custom Field</h3>
+    <p class="mdesc">Configure the field that will appear on the branch inquiry form.</p>
+    <div class="fg"><label>Field Label *</label><input type="text" id="fmLabel" placeholder="e.g. Policy Number, Vehicle Plate..."></div>
+    <div class="fg"><label>Field Type *</label>
+      <select id="fmType" onchange="fmTypeChange()">
+        <option value="text">Text (single line)</option>
+        <option value="number">Number</option>
+        <option value="textarea">Text Area (multi-line)</option>
+        <option value="select">Dropdown</option>
+        <option value="date">Date</option>
+        <option value="yesno">Yes / No Toggle</option>
+      </select>
+    </div>
+    <div class="fg" id="fmOptWrap" style="display:none">
+      <label>Options (one per line) *</label>
+      <textarea id="fmOpts" rows="4" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);">
+        <input type="checkbox" id="fmReq" style="width:auto;padding:0;"> Required field
+      </label>
+    </div>
+    <div id="fmErr" class="err-msg"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-sm" onclick="saveField()">Save Field</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// SUPABASE CONFIG — filled by setup wizard
+// ══════════════════════════════════════════════════════
+let SB_URL = localStorage.getItem('itp_sb_url') || '';
+let SB_KEY = localStorage.getItem('itp_sb_key') || '';
+
+// ══════════════════════════════════════════════════════
+// DEFAULT APP CONFIG (stored in Supabase config table)
+// ══════════════════════════════════════════════════════
+const CFG_DEFAULTS = {
+  companyName:'InsureTrack Pro',
+  tagline:'Insurance Inquiry Management',
+  branchPassword:'branch123',
+  adminUsername:'admin',
+  adminPassword:'admin123',
+  branches:[
+    'Branch 01 - Dubai Main','Branch 02 - Dubai Marina','Branch 03 - Dubai Deira',
+    'Branch 04 - Dubai JLT','Branch 05 - Dubai Business Bay',
+    'Branch 06 - Abu Dhabi Main','Branch 07 - Abu Dhabi Khalifa City',
+    'Branch 08 - Abu Dhabi Mussafah','Branch 09 - Abu Dhabi Reem Island',
+    'Branch 10 - Abu Dhabi Al Ain','Branch 11 - Sharjah Main',
+    'Branch 12 - Sharjah Industrial','Branch 13 - Sharjah Al Nahda',
+    'Branch 14 - Ajman Main','Branch 15 - Ajman Al Rashidiya',
+    'Branch 16 - Ras Al Khaimah Main','Branch 17 - RAK Al Nakheel',
+    'Branch 18 - Fujairah Main','Branch 19 - Umm Al Quwain',
+    'Branch 20 - Dubai Al Barsha','Branch 21 - Dubai Al Quoz',
+    'Branch 22 - Dubai Jumeirah','Branch 23 - Dubai Mirdif',
+    'Branch 24 - Dubai Al Qusais','Branch 25 - Dubai Oud Metha',
+    'Branch 26 - Abu Dhabi Yas Island','Branch 27 - Abu Dhabi Corniche',
+    'Branch 28 - Abu Dhabi Hamdan','Branch 29 - Abu Dhabi Tourist Club',
+    'Branch 30 - Sharjah Rolla','Branch 31 - Sharjah Corniche',
+    'Branch 32 - Sharjah Al Majaz','Branch 33 - Sharjah Al Khan',
+    'Branch 34 - Dubai Silicon Oasis','Branch 35 - Dubai Production City',
+    'Branch 36 - Dubai Sports City','Branch 37 - Dubai Motor City',
+    'Branch 38 - Dubai Jumeirah Village','Branch 39 - Dubai International City',
+    'Branch 40 - Dubai Al Warqa','Branch 41 - Dubai Nad Al Hamar',
+    'Branch 42 - Dubai Muhaisnah','Branch 43 - Dubai Al Twar',
+    'Branch 44 - Abu Dhabi Electra','Branch 45 - Abu Dhabi Electra East',
+    'Branch 46 - Al Ain Main','Branch 47 - Al Ain Hili',
+    'Branch 48 - Al Ain Jimi','Branch 49 - Khor Fakkan','Branch 50 - Dibba'
+  ],
+  insuranceTypes:['Health Insurance','Motor / Car Insurance','Life Insurance','Home Insurance','Travel Insurance','Business Insurance','Workmen Compensation','Marine Insurance','Other'],
+  customFields:[]
+};
+
+// ══════════════════════════════════════════════════════
+// SUPABASE API HELPERS
+// ══════════════════════════════════════════════════════
+async function sbFetch(path, opts={}) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || '',
+      ...opts.headers
+    }
+  });
+  if (!res.ok) {
+    const e = await res.text();
+    throw new Error(e);
+  }
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
+async function getConfig() {
+  try {
+    const rows = await sbFetch('app_config?key=eq.main');
+    if (rows && rows.length > 0) return {...CFG_DEFAULTS, ...rows[0].value};
+    return {...CFG_DEFAULTS};
+  } catch { return {...CFG_DEFAULTS}; }
+}
+
+async function saveConfig(cfg) {
+  await sbFetch('app_config', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates',
+    headers: {'Prefer': 'resolution=merge-duplicates'},
+    body: JSON.stringify({key: 'main', value: cfg})
+  });
+}
+
+async function getRecords(filters={}) {
+  let q = 'inquiries?order=created_at.desc&limit=2000';
+  if (filters.branch) q += `&branch=eq.${encodeURIComponent(filters.branch)}`;
+  if (filters.insurance) q += `&insurance=eq.${encodeURIComponent(filters.insurance)}`;
+  if (filters.available) q += `&available=eq.${filters.available}`;
+  return await sbFetch(q) || [];
+}
+
+async function insertRecord(rec) {
+  return await sbFetch('inquiries', {
+    method: 'POST',
+    prefer: 'return=representation',
+    headers: {'Prefer': 'return=representation'},
+    body: JSON.stringify(rec)
+  });
+}
+
+async function deleteRecord(id) {
+  await sbFetch(`inquiries?id=eq.${id}`, {method: 'DELETE'});
+}
+
+async function deleteAllRecords() {
+  await sbFetch('inquiries?id=neq.00000000-0000-0000-0000-000000000000', {method: 'DELETE'});
+}
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let role=null, branch=null, avail=null, loginRole='branch', editFieldIdx=null;
+let charts={}, cachedConfig=null;
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+window.onload = async () => {
+  if (!SB_URL || !SB_KEY) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('setupScreen').classList.add('open');
+    return;
+  }
+  await initApp();
+};
+
+async function initApp() {
+  updateDbStatus('checking', 'Connecting to database...');
+  try {
+    cachedConfig = await getConfig();
+    applyBranding(cachedConfig);
+    fillLoginBranches(cachedConfig);
+    updateDbStatus('ok', 'Database connected ✓');
+  } catch(e) {
+    updateDbStatus('err', 'Cannot connect — check Supabase config');
+  }
+}
+
+function updateDbStatus(type, msg) {
+  const el = document.getElementById('dbStatus');
+  const txt = document.getElementById('dbStatusTxt');
+  if (!el) return;
+  el.className = 'db-status ' + type;
+  txt.textContent = msg;
+}
+
+function applyBranding(cfg) {
+  document.getElementById('loginTitle').textContent = cfg.companyName;
+  document.getElementById('loginSub').textContent = cfg.tagline;
+  const tn = document.getElementById('tName');
+  if (tn) tn.textContent = cfg.companyName;
+  document.title = cfg.companyName;
+}
+
+function fillLoginBranches(cfg) {
+  const s = document.getElementById('lBranch');
+  s.innerHTML = cfg.branches.map(b=>`<option>${b}</option>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// SETUP WIZARD
+// ══════════════════════════════════════════════════════
+async function saveSupabaseConfig() {
+  const url = document.getElementById('sw_url').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('sw_key').value.trim();
+  const err = document.getElementById('sw_err');
+  if (!url || !key) { err.textContent = 'Both fields are required.'; return; }
+  if (!url.startsWith('https://')) { err.textContent = 'URL must start with https://'; return; }
+  SB_URL = url; SB_KEY = key;
+  localStorage.setItem('itp_sb_url', url);
+  localStorage.setItem('itp_sb_key', key);
+  err.textContent = '';
+  try {
+    await getConfig();
+    document.getElementById('setupScreen').classList.remove('open');
+    document.getElementById('loginScreen').style.display = 'flex';
+    await initApp();
+    showToast('✅ Connected to Supabase successfully!');
+  } catch(e) {
+    err.textContent = 'Connection failed. Check your URL and key, and make sure you ran the SQL setup.';
+    SB_URL = ''; SB_KEY = '';
+    localStorage.removeItem('itp_sb_url');
+    localStorage.removeItem('itp_sb_key');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════
+function setRole(r) {
+  loginRole = r;
+  document.querySelectorAll('.role-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&r==='branch')||(i===1&&r==='admin')));
+  document.getElementById('bFields').style.display = r==='branch' ? '' : 'none';
+  document.getElementById('aFields').style.display = r==='admin' ? '' : 'none';
+}
+
+async function login() {
+  const cfg = cachedConfig || await getConfig();
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  if (loginRole === 'branch') {
+    const p = document.getElementById('bPass').value;
+    const b = document.getElementById('lBranch').value;
+    if (p !== cfg.branchPassword) { err.textContent = 'Incorrect branch password.'; return; }
+    role = 'branch'; branch = b;
+  } else {
+    const u = document.getElementById('aUser').value;
+    const p = document.getElementById('aPass').value;
+    if (u !== cfg.adminUsername || p !== cfg.adminPassword) { err.textContent = 'Incorrect admin credentials.'; return; }
+    role = 'admin';
+  }
+  showApp(cfg);
+}
+
+function showApp(cfg) {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  applyBranding(cfg);
+  if (role === 'branch') {
+    document.getElementById('tSub').textContent = branch;
+    document.getElementById('roleBadge').textContent = 'Branch Staff';
+    document.getElementById('roleBadge').className = 'badge badge-branch';
+    buildSidebar([{id:'branchForm',icon:'📝',label:'New Inquiry'}]);
+    nav('branchForm');
+  } else {
+    document.getElementById('tSub').textContent = 'Admin Dashboard';
+    document.getElementById('roleBadge').textContent = 'Administrator';
+    document.getElementById('roleBadge').className = 'badge badge-admin';
+    buildSidebar([
+      {label:'OVERVIEW',type:'s'},{id:'dashboard',icon:'📊',label:'Dashboard'},{id:'analytics',icon:'📈',label:'Analytics'},
+      {label:'DATA',type:'s'},{id:'records',icon:'📋',label:'All Records'},
+      {label:'CONFIGURE',type:'s'},{id:'fields',icon:'🧩',label:'Form Fields'},{id:'settings',icon:'⚙️',label:'Settings'},
+    ]);
+    nav('dashboard');
+  }
+}
+
+function logout() {
+  role=null; branch=null; avail=null;
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  ['bPass','aPass','aUser'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('loginErr').textContent = '';
+  destroyCharts();
+}
+
+// ══════════════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════════════
+function buildSidebar(items) {
+  document.getElementById('sidebar').innerHTML = items.map(it=>{
+    if (it.type==='s') return `<div class="nav-label">${it.label}</div>`;
+    return `<button class="nav-item" id="nav_${it.id}" onclick="nav('${it.id}')"><span class="ni">${it.icon}</span>${it.label}</button>`;
+  }).join('');
+}
+
+function nav(page) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const btn = document.getElementById('nav_'+page);
+  if (btn) btn.classList.add('active');
+  ['branchForm','dashboard','analytics','records','fields','settings'].forEach(p=>
+    document.getElementById('pg'+p.charAt(0).toUpperCase()+p.slice(1)).style.display='none');
+  destroyCharts();
+  document.getElementById('pg'+page.charAt(0).toUpperCase()+page.slice(1)).style.display = '';
+  renders[page] && renders[page]();
+}
+
+const renders = {
+  branchForm: renderBranchForm,
+  dashboard: renderDashboard,
+  analytics: renderAnalytics,
+  records: renderRecords,
+  fields: renderFieldsPage,
+  settings: renderSettings
+};
+
+// ══════════════════════════════════════════════════════
+// BRANCH FORM
+// ══════════════════════════════════════════════════════
+async function renderBranchForm() {
+  const el = document.getElementById('pgBranchForm');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading form...</div>';
+  const cfg = await getConfig(); cachedConfig = cfg;
+  const dynFields = cfg.customFields.map((f,i) => {
+    if (f.type==='yesno') return `<div class="fg" id="df_wrap_${i}"><label>${f.label}${f.required?' <span style="color:var(--warning)">*</span>':''}</label><div class="avail-toggle"><button type="button" class="avail-btn yes" onclick="setDynYN(${i},'yes')">✅ Yes</button><button type="button" class="avail-btn no" onclick="setDynYN(${i},'no')">❌ No</button></div></div>`;
+    if (f.type==='select') return `<div class="fg"><label>${f.label}${f.required?' <span style="color:var(--warning)">*</span>':''}</label><select id="df_${i}"><option value="">-- Select --</option>${f.options.map(o=>`<option>${o}</option>`).join('')}</select></div>`;
+    if (f.type==='textarea') return `<div class="fg"><label>${f.label}${f.required?' <span style="color:var(--warning)">*</span>':''}</label><textarea id="df_${i}" rows="3" placeholder="${f.label}..."></textarea></div>`;
+    return `<div class="fg"><label>${f.label}${f.required?' <span style="color:var(--warning)">*</span>':''}</label><input type="${f.type==='number'?'number':'text'}" id="df_${i}" placeholder="${f.label}"></div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="branch-form-wrap">
+      <div class="form-card">
+        <h3>New Customer Inquiry</h3>
+        <p class="fc-sub">Record the details of the customer's insurance inquiry for <b>${branch}</b>.</p>
+        <div class="form-row">
+          <div class="fg"><label>Customer Full Name <span style="color:var(--warning)">*</span></label><input type="text" id="f_name" placeholder="Ahmed Al Mansoori"></div>
+          <div class="fg"><label>Emirates ID <span style="color:var(--warning)">*</span></label><input type="text" id="f_eid" placeholder="784-XXXX-XXXXXXX-X" maxlength="18"></div>
+        </div>
+        <div class="form-row">
+          <div class="fg"><label>Insurance Type <span style="color:var(--warning)">*</span></label><select id="f_ins"><option value="">-- Select --</option>${cfg.insuranceTypes.map(t=>`<option>${t}</option>`).join('')}</select></div>
+          <div class="fg"><label>Working Company</label><input type="text" id="f_co" placeholder="Customer's employer"></div>
+        </div>
+        <div class="fg"><label>Insurance Available? <span style="color:var(--warning)">*</span></label>
+          <div class="avail-toggle">
+            <button type="button" class="avail-btn yes" onclick="setAvail('yes')">✅ Yes — Available</button>
+            <button type="button" class="avail-btn no" onclick="setAvail('no')">❌ No — Not Available</button>
+          </div>
+        </div>
+        ${dynFields}
+        <div class="form-row">
+          <div class="fg"><label>Additional Notes</label><textarea id="f_notes" rows="2" placeholder="Any extra details..."></textarea></div>
+          <div class="fg"><label>Staff Name</label><input type="text" id="f_staff" placeholder="Your name"></div>
+        </div>
+        <button class="btn" id="submitBtn" onclick="submitInquiry()">Submit Inquiry →</button>
+        <div id="fErr" class="err-msg" style="margin-top:8px;"></div>
+      </div>
+    </div>`;
+  avail = null; window._dynYN = {};
+}
+
+function setAvail(v) {
+  avail = v;
+  document.querySelectorAll('#pgBranchForm .avail-toggle .avail-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#pgBranchForm .avail-toggle .avail-btn.'+v).classList.add('on');
+}
+
+function setDynYN(i,v) {
+  window._dynYN = window._dynYN || {};
+  window._dynYN[i] = v;
+  const wrap = document.getElementById('df_wrap_'+i);
+  if (wrap) { wrap.querySelectorAll('.avail-btn').forEach(b=>b.classList.remove('on')); wrap.querySelector('.avail-btn.'+v).classList.add('on'); }
+}
+
+async function submitInquiry() {
+  const cfg = cachedConfig || await getConfig();
+  const name = document.getElementById('f_name').value.trim();
+  const eid = document.getElementById('f_eid').value.trim();
+  const ins = document.getElementById('f_ins').value;
+  const co = document.getElementById('f_co').value.trim();
+  const notes = document.getElementById('f_notes').value.trim();
+  const staff = document.getElementById('f_staff').value.trim();
+  const err = document.getElementById('fErr');
+
+  if (!name) { err.textContent='Customer name is required.'; return; }
+  if (!eid) { err.textContent='Emirates ID is required.'; return; }
+  if (!ins) { err.textContent='Please select an insurance type.'; return; }
+  if (!avail) { err.textContent='Please select availability.'; return; }
+
+  const dynData = {};
+  for (let i=0; i<cfg.customFields.length; i++) {
+    const f = cfg.customFields[i];
+    let val = f.type==='yesno' ? ((window._dynYN||{})[i]||'') : (document.getElementById('df_'+i)?.value.trim()||'');
+    if (f.required && !val) { err.textContent=`"${f.label}" is required.`; return; }
+    dynData[f.label] = val;
+  }
+  err.textContent = '';
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  try {
+    await insertRecord({
+      branch, name,
+      eid_encrypted: eid, // In production: encrypt before storing
+      insurance: ins,
+      available: avail,
+      company: co,
+      notes, staff,
+      custom_data: dynData
+    });
+    showToast('✅ Inquiry submitted successfully!');
+    renderBranchForm();
+  } catch(e) {
+    err.textContent = 'Failed to save. Check your connection.';
+    btn.disabled = false; btn.textContent = 'Submit Inquiry →';
+    showToast('❌ Submission failed!', 'red');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════
+async function renderDashboard() {
+  const el = document.getElementById('pgDashboard');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading dashboard...</div>';
+  try {
+    const [r, cfg] = await Promise.all([getRecords(), getConfig()]);
+    cachedConfig = cfg;
+    const total = r.length;
+    const yes = r.filter(x=>x.available==='yes').length;
+    const no = r.filter(x=>x.available==='no').length;
+    const rate = total ? Math.round(yes/total*100) : 0;
+    const activeBr = new Set(r.map(x=>x.branch)).size;
+    const today = new Date().toISOString().slice(0,10);
+    const todayC = r.filter(x=>x.created_at?.startsWith(today)).length;
+
+    const days7=[]; const labels7=[];
+    for (let i=6; i>=0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const dl = d.toISOString().slice(0,10);
+      labels7.push(d.toLocaleDateString('en-GB',{weekday:'short'}));
+      days7.push(r.filter(x=>x.created_at?.startsWith(dl)).length);
+    }
+
+    el.innerHTML = `
+      <div class="page-header"><h2>Dashboard</h2><p>Real-time overview — all branches, live data</p></div>
+      <div class="kpi-grid">
+        <div class="kpi-card c1"><div class="kpi-trend">📋</div><div class="kpi-lbl">Total Inquiries</div><div class="kpi-val">${total}</div><div class="kpi-sub">All time</div></div>
+        <div class="kpi-card c2"><div class="kpi-trend">✅</div><div class="kpi-lbl">Available</div><div class="kpi-val">${yes}</div><div class="kpi-sub">${rate}% rate</div></div>
+        <div class="kpi-card c3"><div class="kpi-trend">❌</div><div class="kpi-lbl">Not Available</div><div class="kpi-val">${no}</div><div class="kpi-sub">${100-rate}% of total</div></div>
+        <div class="kpi-card c4"><div class="kpi-trend">🏢</div><div class="kpi-lbl">Active Branches</div><div class="kpi-val">${activeBr}</div><div class="kpi-sub">of ${cfg.branches.length} total</div></div>
+        <div class="kpi-card c5"><div class="kpi-trend">📅</div><div class="kpi-lbl">Today</div><div class="kpi-val">${todayC}</div><div class="kpi-sub">inquiries today</div></div>
+        <div class="kpi-card c6"><div class="kpi-trend">📊</div><div class="kpi-lbl">Availability Rate</div><div class="kpi-val">${rate}%</div><div class="kpi-sub">yes / total</div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">7-Day Trend</div><div class="chart-sub">Daily submissions this week</div><canvas id="ch_trend" height="180"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Availability Split</div><div class="chart-sub">Yes vs Not Available</div><canvas id="ch_avail" height="180"></canvas></div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">Top Insurance Types</div><div class="chart-sub">Most requested</div><canvas id="ch_ins" height="200"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Top Branches</div><div class="chart-sub">By inquiry volume</div><canvas id="ch_br" height="200"></canvas></div>
+      </div>`;
+
+    setTimeout(() => {
+      mkChart('ch_trend','line',labels7,[{label:'Inquiries',data:days7,borderColor:'#00e5b8',backgroundColor:'rgba(0,229,184,0.06)',tension:0.4,fill:true,pointBackgroundColor:'#00e5b8',pointRadius:4}]);
+      mkChart('ch_avail','doughnut',['Available','Not Available'],[{data:[yes,no],backgroundColor:['rgba(34,211,122,0.8)','rgba(255,64,96,0.8)'],borderColor:['#22d37a','#ff4060'],borderWidth:2}],{plugins:{legend:{position:'bottom',labels:{color:'#7a9ab8',font:{size:12}}}}});
+      const insCounts={}; r.forEach(x=>{insCounts[x.insurance]=(insCounts[x.insurance]||0)+1;});
+      const iK=Object.keys(insCounts).sort((a,b)=>insCounts[b]-insCounts[a]).slice(0,8);
+      mkChart('ch_ins','bar',iK,[{label:'Count',data:iK.map(k=>insCounts[k]),backgroundColor:'rgba(59,158,255,0.7)',borderColor:'#3b9eff',borderWidth:1,borderRadius:6}]);
+      const brCounts={}; r.forEach(x=>{brCounts[x.branch]=(brCounts[x.branch]||0)+1;});
+      const bK=Object.keys(brCounts).sort((a,b)=>brCounts[b]-brCounts[a]).slice(0,10);
+      mkChart('ch_br','bar',bK.map(k=>k.replace(/^Branch \d+ - /,'')),[{label:'Inquiries',data:bK.map(k=>brCounts[k]),backgroundColor:'rgba(168,85,247,0.7)',borderColor:'#a855f7',borderWidth:1,borderRadius:6}],{indexAxis:'y'});
+    }, 50);
+  } catch(e) { el.innerHTML = `<div class="empty"><div class="eico">⚠️</div><p>Failed to load data. Check connection.</p></div>`; }
+}
+
+// ══════════════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════════════
+async function renderAnalytics() {
+  const el = document.getElementById('pgAnalytics');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading analytics...</div>';
+  try {
+    const r = await getRecords();
+    const monthly={};
+    r.forEach(x=>{
+      const d=new Date(x.created_at||Date.now());
+      const key=d.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+      monthly[key]=(monthly[key]||0)+1;
+    });
+    const mKeys=Object.keys(monthly).slice(-6);
+    const brCounts={}; r.forEach(x=>{brCounts[x.branch]=(brCounts[x.branch]||0)+1;});
+    const topBr=Object.entries(brCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const maxBr=topBr[0]?topBr[0][1]:1;
+    const insAvail={}; r.forEach(x=>{if(!insAvail[x.insurance])insAvail[x.insurance]={yes:0,no:0};insAvail[x.insurance][x.available]++;});
+    const iaKeys=Object.keys(insAvail).sort((a,b)=>(insAvail[b].yes+insAvail[b].no)-(insAvail[a].yes+insAvail[a].no)).slice(0,7);
+    const hours=Array(24).fill(0);
+    r.forEach(x=>{try{const h=new Date(x.created_at).getHours();hours[h]++;}catch{}});
+
+    el.innerHTML = `
+      <div class="page-header"><h2>Analytics</h2><p>Deep insights into inquiry patterns across all branches</p></div>
+      <div class="chart-grid-3">
+        <div class="chart-card"><div class="chart-title">Monthly Volume</div><div class="chart-sub">Inquiries over last 6 months</div><canvas id="an_monthly" height="200"></canvas></div>
+        <div class="chart-card" style="overflow:auto;">
+          <div class="chart-title">Top Branches</div><div class="chart-sub">By inquiry count</div>
+          <ul class="top-list" style="margin-top:8px;">
+            ${topBr.map(([b,n],i)=>`<li><span class="rank">${i+1}</span><div style="flex:1;margin:0 10px;"><div class="tname">${b.replace(/^Branch \d+ - /,'')}</div><div class="bar-bg"><div class="bar-fill" style="width:${Math.round(n/maxBr*100)}%"></div></div></div><span class="cnt">${n}</span></li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">Insurance Type vs Availability</div><div class="chart-sub">Available vs not, by type</div><canvas id="an_ia" height="220"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Inquiry Hour Distribution</div><div class="chart-sub">What time do customers visit?</div><canvas id="an_hours" height="220"></canvas></div>
+      </div>`;
+
+    setTimeout(()=>{
+      mkChart('an_monthly','bar',mKeys,[{label:'Inquiries',data:mKeys.map(k=>monthly[k]),backgroundColor:'rgba(0,229,184,0.6)',borderColor:'#00e5b8',borderWidth:1,borderRadius:6}]);
+      mkChart('an_ia','bar',iaKeys,[{label:'Available',data:iaKeys.map(k=>insAvail[k].yes),backgroundColor:'rgba(34,211,122,0.7)',borderRadius:4},{label:'Not Available',data:iaKeys.map(k=>insAvail[k].no),backgroundColor:'rgba(255,64,96,0.7)',borderRadius:4}],{plugins:{legend:{labels:{color:'#7a9ab8'}}}});
+      mkChart('an_hours','line',Array.from({length:24},(_,i)=>i+'h'),[{label:'Inquiries',data:hours,borderColor:'#ffb020',backgroundColor:'rgba(255,176,32,0.06)',tension:0.4,fill:true,pointRadius:2,pointBackgroundColor:'#ffb020'}]);
+    },50);
+  } catch(e) { el.innerHTML = `<div class="empty"><div class="eico">⚠️</div><p>Failed to load analytics.</p></div>`; }
+}
+
+// ══════════════════════════════════════════════════════
+// RECORDS
+// ══════════════════════════════════════════════════════
+async function renderRecords() {
+  const el = document.getElementById('pgRecords');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading records...</div>';
+  try {
+    const cfg = await getConfig(); cachedConfig = cfg;
+    const r = await getRecords();
+    const dynH = cfg.customFields.map(f=>`<th>${f.label}</th>`).join('');
+    el.innerHTML = `
+      <div class="page-header"><h2>All Records</h2><p>Complete inquiry database — all branches, real-time</p></div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Records <span id="recCount" style="color:var(--muted2);font-weight:400;font-size:12px;">(${r.length})</span></span>
+          <div class="card-actions">
+            <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+            <button class="btn btn-red btn-sm" onclick="clearAllRecs()">🗑 Clear All</button>
+          </div>
+        </div>
+        <div class="filters">
+          <input type="text" id="qs" placeholder="🔍 Search name, company..." oninput="filterRecords()">
+          <select id="fb" onchange="filterRecords()"><option value="">All Branches</option>${cfg.branches.map(b=>`<option>${b}</option>`).join('')}</select>
+          <select id="fi" onchange="filterRecords()"><option value="">All Insurance Types</option>${cfg.insuranceTypes.map(t=>`<option>${t}</option>`).join('')}</select>
+          <select id="fa" onchange="filterRecords()"><option value="">All Results</option><option value="yes">Available</option><option value="no">Not Available</option></select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Date & Time</th><th>Branch</th><th>Customer</th><th>Emirates ID</th><th>Insurance</th><th>Available</th><th>Company</th><th>Staff</th>${dynH}<th></th></tr></thead>
+            <tbody id="recBody"></tbody>
+          </table>
+          <div id="recEmpty" class="empty" style="display:none"><div class="eico">📋</div><p>No records found</p></div>
+        </div>
+      </div>`;
+    window._allRecs = r;
+    filterRecords();
+  } catch(e) { el.innerHTML = `<div class="empty"><div class="eico">⚠️</div><p>Failed to load records.</p></div>`; }
+}
+
+function filterRecords() {
+  const cfg = cachedConfig || CFG_DEFAULTS;
+  let r = window._allRecs || [];
+  const q = (document.getElementById('qs')||{}).value?.toLowerCase()||'';
+  const fb = (document.getElementById('fb')||{}).value||'';
+  const fi = (document.getElementById('fi')||{}).value||'';
+  const fa = (document.getElementById('fa')||{}).value||'';
+  if (q) r = r.filter(x=>x.name?.toLowerCase().includes(q)||(x.company||'').toLowerCase().includes(q));
+  if (fb) r = r.filter(x=>x.branch===fb);
+  if (fi) r = r.filter(x=>x.insurance===fi);
+  if (fa) r = r.filter(x=>x.available===fa);
+  const cnt = document.getElementById('recCount');
+  if (cnt) cnt.textContent = `(${r.length})`;
+  const body = document.getElementById('recBody');
+  const empty = document.getElementById('recEmpty');
+  if (!body) return;
+  if (r.length===0) { body.innerHTML=''; if(empty)empty.style.display=''; return; }
+  if (empty) empty.style.display='none';
+  body.innerHTML = r.map((x,i)=>{
+    const dynTds = cfg.customFields.map(f=>`<td style="color:var(--muted2);font-size:12px">${(x.custom_data||{})[f.label]||'—'}</td>`).join('');
+    const eidDisplay = x.eid_encrypted ? maskEID(x.eid_encrypted) : '—';
+    const dt = x.created_at ? new Date(x.created_at).toLocaleString('en-GB') : '—';
+    return `<tr>
+      <td style="color:var(--muted);font-size:11px">${i+1}</td>
+      <td style="color:var(--muted2);font-size:11px;white-space:nowrap">${dt}</td>
+      <td style="font-size:11px">${x.branch}</td>
+      <td><b>${x.name}</b></td>
+      <td><span class="eid-masked" title="EID masked for security">${eidDisplay}</span></td>
+      <td>${x.insurance}</td>
+      <td><span class="pill pill-${x.available}">${x.available==='yes'?'✅ Yes':'❌ No'}</span></td>
+      <td style="color:var(--muted2)">${x.company||'—'}</td>
+      <td style="color:var(--muted2);font-size:11px">${x.staff||'—'}</td>
+      ${dynTds}
+      <td><button class="del-btn" onclick="delRec('${x.id}')">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function maskEID(eid) {
+  if (!eid) return '—';
+  // Show first 3 and last 1 character, mask the rest
+  if (eid.length <= 4) return '****';
+  return eid.slice(0,3) + '-****-*******-' + eid.slice(-1);
+}
+
+async function delRec(id) {
+  if (!confirm('Delete this record permanently?')) return;
+  try { await deleteRecord(id); window._allRecs = (window._allRecs||[]).filter(r=>r.id!==id); filterRecords(); showToast('Record deleted.'); }
+  catch { showToast('Failed to delete.','red'); }
+}
+
+async function clearAllRecs() {
+  if (!confirm('Delete ALL records permanently? This cannot be undone.')) return;
+  if (!confirm('Final warning — all inquiry data will be lost.')) return;
+  try { await deleteAllRecords(); window._allRecs=[]; filterRecords(); showToast('All records cleared.'); }
+  catch { showToast('Failed to clear.','red'); }
+}
+
+async function exportCSV() {
+  const cfg = cachedConfig || await getConfig();
+  const r = window._allRecs || await getRecords();
+  const dynH = cfg.customFields.map(f=>f.label);
+  const headers = ['#','Date & Time','Branch','Customer','Emirates ID (masked)','Insurance','Available','Company','Notes','Staff',...dynH];
+  const rows = r.map((x,i)=>[
+    i+1,
+    x.created_at ? new Date(x.created_at).toLocaleString('en-GB') : '',
+    x.branch, x.name,
+    maskEID(x.eid_encrypted),
+    x.insurance, x.available, x.company||'', x.notes||'', x.staff||'',
+    ...dynH.map(h=>(x.custom_data||{})[h]||'')
+  ]);
+  const csv = [headers,...rows].map(row=>row.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = `inquiries_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  showToast('⬇ CSV exported!');
+}
+
+// ══════════════════════════════════════════════════════
+// FIELD BUILDER
+// ══════════════════════════════════════════════════════
+async function renderFieldsPage() {
+  const el = document.getElementById('pgFields');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+  const cfg = await getConfig(); cachedConfig = cfg;
+  const CORE=[{label:'Customer Full Name',type:'text',required:true},{label:'Emirates ID',type:'text',required:true},{label:'Insurance Type',type:'select',required:true},{label:'Working Company',type:'text',required:false},{label:'Insurance Available',type:'yesno',required:true},{label:'Additional Notes',type:'textarea',required:false},{label:'Staff Name',type:'text',required:false}];
+  const coreHTML = CORE.map(f=>`<div class="fb-item"><span style="color:var(--muted)">☰</span><span class="fb-label">${f.label}</span><div class="fb-meta"><span class="field-type-badge ft-${f.type}">${f.type}</span>${f.required?'<span class="fb-req">required</span>':''}<span class="fb-fixed">core</span></div></div>`).join('');
+  const custHTML = cfg.customFields.length===0
+    ? '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No custom fields yet.</div>'
+    : cfg.customFields.map((f,i)=>`<div class="fb-item"><span style="color:var(--muted)">☰</span><span class="fb-label">${f.label}</span><div class="fb-meta"><span class="field-type-badge ft-${f.type}">${f.type}</span>${f.required?'<span class="fb-req">required</span>':''}</div><div class="fb-actions"><button class="btn btn-ghost btn-xs" onclick="editField(${i})">✏️</button><button class="btn btn-red btn-xs" onclick="deleteField(${i})">🗑</button>${i>0?`<button class="btn btn-ghost btn-xs" onclick="moveField(${i},-1)">↑</button>`:''} ${i<cfg.customFields.length-1?`<button class="btn btn-ghost btn-xs" onclick="moveField(${i},1)">↓</button>`:''}</div></div>`).join('');
+
+  el.innerHTML = `
+    <div class="page-header"><h2>Form Field Builder</h2><p>Customize what data branch staff collect</p></div>
+    <div class="settings-layout">
+      <div class="scard wide"><h3>🔒 Core Fields</h3><p class="sdesc">These are fixed and always present on the form.</p><div class="field-builder-list">${coreHTML}</div></div>
+      <div class="scard wide"><h3>🧩 Custom Fields</h3><p class="sdesc">Add extra fields for your specific needs. They appear below core fields on the branch form, and as columns in the records table.</p><div class="field-builder-list" id="cfList">${custHTML}</div><button class="btn btn-sm" style="width:auto;padding:10px 20px;" onclick="openAddField()">+ Add Custom Field</button></div>
+    </div>`;
+}
+
+function openAddField() {
+  editFieldIdx=null;
+  document.getElementById('fmTitle').textContent='Add Custom Field';
+  document.getElementById('fmLabel').value='';
+  document.getElementById('fmType').value='text';
+  document.getElementById('fmOpts').value='';
+  document.getElementById('fmReq').checked=false;
+  document.getElementById('fmOptWrap').style.display='none';
+  document.getElementById('fmErr').textContent='';
+  document.getElementById('fieldModal').classList.add('open');
+}
+
+function editField(i) {
+  const f = cachedConfig.customFields[i];
+  editFieldIdx=i;
+  document.getElementById('fmTitle').textContent='Edit Field';
+  document.getElementById('fmLabel').value=f.label;
+  document.getElementById('fmType').value=f.type;
+  document.getElementById('fmOpts').value=(f.options||[]).join('\n');
+  document.getElementById('fmReq').checked=!!f.required;
+  document.getElementById('fmOptWrap').style.display=f.type==='select'?'':'none';
+  document.getElementById('fmErr').textContent='';
+  document.getElementById('fieldModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('fieldModal').classList.remove('open'); }
+function fmTypeChange() { document.getElementById('fmOptWrap').style.display=document.getElementById('fmType').value==='select'?'':'none'; }
+
+async function saveField() {
+  const label=document.getElementById('fmLabel').value.trim();
+  const type=document.getElementById('fmType').value;
+  const opts=document.getElementById('fmOpts').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+  const req=document.getElementById('fmReq').checked;
+  if (!label) { document.getElementById('fmErr').textContent='Label required.'; return; }
+  if (type==='select'&&opts.length<2) { document.getElementById('fmErr').textContent='Add at least 2 options.'; return; }
+  const field={label,type,required:req,options:type==='select'?opts:[]};
+  const cfg=await getConfig();
+  if (editFieldIdx!==null) cfg.customFields[editFieldIdx]=field;
+  else cfg.customFields.push(field);
+  await saveConfig(cfg); cachedConfig=cfg;
+  closeModal(); renderFieldsPage();
+  showToast(`✅ Field "${label}" saved!`);
+}
+
+async function deleteField(i) {
+  const cfg=await getConfig();
+  if (!confirm(`Delete field "${cfg.customFields[i].label}"?`)) return;
+  cfg.customFields.splice(i,1); await saveConfig(cfg); cachedConfig=cfg;
+  renderFieldsPage(); showToast('Field deleted.');
+}
+
+async function moveField(i,dir) {
+  const cfg=await getConfig(); const arr=cfg.customFields; const ni=i+dir;
+  if (ni<0||ni>=arr.length) return;
+  [arr[i],arr[ni]]=[arr[ni],arr[i]];
+  await saveConfig(cfg); cachedConfig=cfg; renderFieldsPage();
+}
+
+// ══════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════
+async function renderSettings() {
+  const el = document.getElementById('pgSettings');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading settings...</div>';
+  const cfg = await getConfig(); cachedConfig = cfg;
+  el.innerHTML = `
+    <div class="page-header"><h2>Settings</h2><p>Configure your system — all changes save to the central database instantly</p></div>
+    <div class="settings-layout">
+
+      <div class="scard">
+        <h3>🏢 Company Name</h3><p class="sdesc">Appears on login screen and top bar for all users.</p>
+        <div class="fg"><label>Company Name</label><input type="text" id="s_cn" value="${esc(cfg.companyName)}"></div>
+        <div class="fg"><label>Tagline</label><input type="text" id="s_tg" value="${esc(cfg.tagline)}"></div>
+        <button class="btn btn-blue btn-sm" onclick="saveName()">💾 Save</button>
+        <div id="msg_name" class="fb"></div>
+      </div>
+
+      <div class="scard">
+        <h3>🔐 Passwords</h3><p class="sdesc">Branch password is shared. Admin credentials are private.</p>
+        <div class="fg"><label>Branch Password (shared)</label><input type="text" id="s_bp" value="${esc(cfg.branchPassword)}"></div>
+        <div class="divider"></div>
+        <div class="fg"><label>Admin Username</label><input type="text" id="s_au" value="${esc(cfg.adminUsername)}"></div>
+        <div class="fg"><label>Admin Password</label><input type="text" id="s_ap" value="${esc(cfg.adminPassword)}"></div>
+        <button class="btn btn-orange btn-sm" onclick="savePw()">🔑 Save Passwords</button>
+        <div id="msg_pw" class="fb"></div>
+      </div>
+
+      <div class="scard">
+        <h3>📋 Insurance Types</h3><p class="sdesc">Dropdown options on the branch form.</p>
+        <div class="list-box" id="sl_ins">${cfg.insuranceTypes.map((t,i)=>`<div class="list-item"><span class="li-name">${t}</span><button class="li-del" onclick="delIns(${i})">✕</button></div>`).join('')}</div>
+        <div class="add-row"><input type="text" id="new_ins" placeholder="e.g. Pet Insurance" onkeydown="if(event.key==='Enter')addIns()"><button class="btn btn-sm" onclick="addIns()">+ Add</button></div>
+        <div id="msg_ins" class="fb"></div>
+      </div>
+
+      <div class="scard">
+        <h3>🏢 Branch Manager</h3><p class="sdesc">Add or remove branches. Updates instantly for all users.</p>
+        <div class="list-box" id="sl_br">${cfg.branches.map((b,i)=>`<div class="list-item"><span class="li-num">${String(i+1).padStart(2,'0')}</span><span class="li-name">${b}</span><button class="li-del" onclick="delBr(${i})">✕</button></div>`).join('')}</div>
+        <div class="add-row"><input type="text" id="new_br" placeholder="e.g. Branch 51 - Dubai Hills" onkeydown="if(event.key==='Enter')addBr()"><button class="btn btn-sm" onclick="addBr()">+ Add</button></div>
+        <div id="msg_br" class="fb"></div>
+      </div>
+
+      <div class="scard wide">
+        <h3>🔧 Supabase Connection</h3><p class="sdesc">Your current database connection details. To change, update these and reconnect.</p>
+        <div class="config-box"><p style="font-size:12px;color:var(--muted2);margin-bottom:6px;">Project URL</p><code>${SB_URL||'Not configured'}</code></div>
+        <button class="btn btn-red btn-sm" style="width:auto;padding:9px 18px;" onclick="resetConnection()">🔌 Change Supabase Connection</button>
+        <div id="msg_sb" class="fb"></div>
+      </div>
+
+    </div>`;
+}
+
+function esc(s){return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function smsg(id,txt,ok=true){const el=document.getElementById(id);if(!el)return;el.textContent=txt;el.className='fb '+(ok?'ok':'er');setTimeout(()=>{if(el)el.textContent='';},3000);}
+
+async function saveName(){
+  const n=document.getElementById('s_cn').value.trim();
+  const t=document.getElementById('s_tg').value.trim();
+  if(!n){smsg('msg_name','Name required.',false);return;}
+  const cfg=await getConfig();cfg.companyName=n;cfg.tagline=t;
+  await saveConfig(cfg);cachedConfig=cfg;applyBranding(cfg);
+  smsg('msg_name','✅ Saved!');
+}
+async function savePw(){
+  const bp=document.getElementById('s_bp').value,au=document.getElementById('s_au').value.trim(),ap=document.getElementById('s_ap').value;
+  if(!bp||!au||!ap){smsg('msg_pw','All fields required.',false);return;}
+  const cfg=await getConfig();cfg.branchPassword=bp;cfg.adminUsername=au;cfg.adminPassword=ap;
+  await saveConfig(cfg);cachedConfig=cfg;smsg('msg_pw','✅ Updated!');
+}
+async function addIns(){
+  const inp=document.getElementById('new_ins'),n=inp.value.trim();
+  if(!n){smsg('msg_ins','Enter a type.',false);return;}
+  const cfg=await getConfig();cfg.insuranceTypes.push(n);await saveConfig(cfg);cachedConfig=cfg;inp.value='';
+  document.getElementById('sl_ins').innerHTML=cfg.insuranceTypes.map((t,i)=>`<div class="list-item"><span class="li-name">${t}</span><button class="li-del" onclick="delIns(${i})">✕</button></div>`).join('');
+  smsg('msg_ins',`✅ "${n}" added!`);
+}
+async function delIns(i){
+  const cfg=await getConfig();if(!confirm(`Remove "${cfg.insuranceTypes[i]}"?`))return;
+  cfg.insuranceTypes.splice(i,1);await saveConfig(cfg);cachedConfig=cfg;renderSettings();
+}
+async function addBr(){
+  const inp=document.getElementById('new_br'),n=inp.value.trim();
+  if(!n){smsg('msg_br','Enter a branch name.',false);return;}
+  const cfg=await getConfig();cfg.branches.push(n);await saveConfig(cfg);cachedConfig=cfg;inp.value='';
+  document.getElementById('sl_br').innerHTML=cfg.branches.map((b,i)=>`<div class="list-item"><span class="li-num">${String(i+1).padStart(2,'0')}</span><span class="li-name">${b}</span><button class="li-del" onclick="delBr(${i})">✕</button></div>`).join('');
+  smsg('msg_br',`✅ "${n}" added!`);
+}
+async function delBr(i){
+  const cfg=await getConfig();if(!confirm(`Remove branch "${cfg.branches[i]}"?`))return;
+  cfg.branches.splice(i,1);await saveConfig(cfg);cachedConfig=cfg;renderSettings();
+}
+function resetConnection(){
+  if(!confirm('This will disconnect from Supabase and show the setup screen. Continue?'))return;
+  localStorage.removeItem('itp_sb_url');localStorage.removeItem('itp_sb_key');
+  location.reload();
+}
+
+// ══════════════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════════════
+function mkChart(id,type,labels,datasets,extraOpts={}) {
+  const ctx=document.getElementById(id); if(!ctx) return;
+  const def={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false,labels:{color:'#7a9ab8',font:{size:11,family:'DM Mono'}}},tooltip:{backgroundColor:'#111d30',titleColor:'#dde8f5',bodyColor:'#7a9ab8',borderColor:'#1c2d45',borderWidth:1}},scales:{x:{ticks:{color:'#4d6585',font:{size:10,family:'DM Mono'}},grid:{color:'rgba(28,45,69,0.5)'}},y:{ticks:{color:'#4d6585',font:{size:10,family:'DM Mono'}},grid:{color:'rgba(28,45,69,0.5)'}}}};
+  if(type==='doughnut'){delete def.scales;def.plugins.legend.display=true;def.cutout='65%';}
+  const ch=new Chart(ctx,{type,data:{labels,datasets},options:deepMerge(def,extraOpts)});
+  charts[id]=ch;
+}
+function deepMerge(a,b){const r={...a};for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')r[k]=deepMerge(a[k],b[k]);else r[k]=b[k];}return r;}
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch{}});charts={};}
+
+// TOAST
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(type?' '+type:'');void t.offsetWidth;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// Enter login
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')login();});
+</script>
+</body>
+</html>
