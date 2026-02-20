@@ -938,6 +938,70 @@ async function submitInquiry() {
 // ══════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════
+// ── INSURANCE COMPANY NAME NORMALIZER
+// Maps old/lowercase/variant entries to canonical display names
+const INS_CO_MAP = {
+  'adnic':'ADNIC (Abu Dhabi National Insurance)',
+  'abu dhabi national insurance':'ADNIC (Abu Dhabi National Insurance)',
+  'aetna':'Aetna',
+  'al buhaira':'Al Buhaira National Insurance',
+  'al buhaira national insurance':'Al Buhaira National Insurance',
+  'buhaira':'Al Buhaira National Insurance',
+  'al madallah':'Al Madallah',
+  'almadallah':'Al Madallah',
+  'al sagr':'Al Sagr National Insurance',
+  'al sagr national insurance':'Al Sagr National Insurance',
+  'alliance':'Alliance Insurance',
+  'alliance insurance':'Alliance Insurance',
+  'allianz':'Allianz Care',
+  'allianz care':'Allianz Care',
+  'axa':'AXA Gulf',
+  'axa gulf':'AXA Gulf',
+  'bupa':'BUPA Arabia',
+  'bupa arabia':'BUPA Arabia',
+  'cigna':'Cigna',
+  'daman':'Daman',
+  'dubai insurance':'Dubai Insurance',
+  'dubai national insurance':'Dubai National Insurance (DNIRC)',
+  'dnirc':'Dubai National Insurance (DNIRC)',
+  'enaya':'Enaya',
+  'emirates insurance':'Emirates Insurance',
+  'gig':'GIG Gulf',
+  'gig gulf':'GIG Gulf',
+  'globality':'Globality Health',
+  'globality health':'Globality Health',
+  'inayah':'INAYAH',
+  'islamic arab insurance':'Islamic Arab Insurance (Salama)',
+  'salama':'Islamic Arab Insurance (Salama)',
+  'mednet':'Mednet',
+  'metlife':'MetLife',
+  'msh':'MSH International',
+  'msh international':'MSH International',
+  'nas':'NAS',
+  'neuron':'Neuron',
+  'nextcare':'Nextcare',
+  'ngi':'NGI (National General Insurance)',
+  'national general insurance':'NGI (National General Insurance)',
+  'oman insurance':'Oman Insurance (Sukoon)',
+  'oman insurance (sukoon)':'Oman Insurance (Sukoon)',
+  'sukoon':'Oman Insurance (Sukoon)',
+  'orient insurance':'Orient Insurance',
+  'oriental':'Oriental Insurance',
+  'oriental insurance':'Oriental Insurance',
+  'qatar insurance':'Qatar Insurance (QIC)',
+  'qatar insurance (qic)':'Qatar Insurance (QIC)',
+  'qic':'Qatar Insurance (QIC)',
+  'syco':'SYCO',
+  'union insurance':'Union Insurance',
+  'watania':'Watania Takaful',
+  'watania takaful':'Watania Takaful',
+};
+function normalizeInsCo(raw) {
+  if (!raw || raw === 'Unknown') return raw || '—';
+  const key = raw.trim().toLowerCase();
+  return INS_CO_MAP[key] || raw; // fallback to original if not in map
+}
+
 async function renderDashboard() {
   const el = document.getElementById('pgDashboard');
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading dashboard...</div>';
@@ -985,7 +1049,7 @@ async function renderDashboard() {
     // Insurance companies
     const icCounts={};
     r.forEach(x=>{
-      const c=(x.custom_data?.insurance_company)||'Unknown';
+      const c=normalizeInsCo((x.custom_data?.insurance_company)||'Unknown');
       icCounts[c]=(icCounts[c]||0)+1;
     });
     const icK=Object.keys(icCounts).sort((a,b)=>icCounts[b]-icCounts[a]).slice(0,8);
@@ -1090,7 +1154,7 @@ async function renderAnalytics() {
     // Top insurance companies
     const icData={};
     r.forEach(x=>{
-      const c=(x.custom_data?.insurance_company)||'Unknown';
+      const c=normalizeInsCo((x.custom_data?.insurance_company)||'Unknown');
       icData[c]=(icData[c]||0)+1;
     });
     const icTop=Object.entries(icData).sort((a,b)=>b[1]-a[1]).slice(0,10);
@@ -1265,7 +1329,7 @@ function filterRecords() {
       <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent2)">${cd.phone||'—'}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">${x.eid_encrypted||'—'}</td>
       <td style="font-size:12px">${cd.customer_location||'—'}</td>
-      <td style="font-size:12px;color:var(--muted2)">${cd.insurance_company||'—'}</td>
+      <td style="font-size:12px;color:var(--muted2)">${normalizeInsCo(cd.insurance_company)||'—'}</td>
       <td><span class="pill" style="background:rgba(59,158,255,0.1);color:var(--accent2);border:1px solid rgba(59,158,255,0.2);font-size:10px">${cd.insurance_type||x.insurance||'—'}</span></td>
       <td>${purch}</td>
       <td style="font-size:11px;color:var(--warning);max-width:180px;white-space:normal">${x.available==='no'?reason:'—'}</td>
@@ -1310,7 +1374,7 @@ async function exportCSV() {
       cd.phone||'',
       x.eid_encrypted||'',
       cd.customer_location||'',
-      cd.insurance_company||'',
+      normalizeInsCo(cd.insurance_company)||'',
       cd.insurance_type||x.insurance||'',
       x.available==='yes'?'Yes':'No',
       cd.reason_if_no||(x.available==='no'?x.notes?.replace('Reason: ',''):''),
