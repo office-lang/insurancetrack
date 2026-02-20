@@ -23,8 +23,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 body::after{content:'';position:fixed;top:-20%;right:-10%;width:600px;height:600px;background:radial-gradient(ellipse,rgba(59,158,255,0.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
 
 /* ── SETUP SCREEN ── */
-#setupScreen{display:none;position:fixed;inset:0;background:var(--bg);z-index:999;align-items:center;justify-content:center;padding:20px;}
-#setupScreen.open{display:flex;}
+/* setup screen removed */
 .setup-box{background:var(--s1);border:1px solid var(--border2);border-radius:24px;padding:40px;width:100%;max-width:560px;box-shadow:0 30px 80px rgba(0,0,0,0.6);}
 .setup-box h2{font-size:22px;font-weight:700;margin-bottom:8px;}
 .setup-box .sdesc{color:var(--muted2);font-size:13px;margin-bottom:28px;line-height:1.6;}
@@ -266,38 +265,7 @@ tr:hover td{background:rgba(255,255,255,0.015);}
 </head>
 <body>
 
-<!-- ══ SUPABASE SETUP WIZARD ══ -->
-<div id="setupScreen">
-  <div class="setup-box">
-    <h2>🔧 Connect to Supabase</h2>
-    <p class="sdesc">Enter your Supabase project credentials below. You only do this once — they'll be saved in this file.</p>
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <h4>Create a free Supabase project</h4>
-        <p>Go to <code>supabase.com</code> → New Project → choose a name and password → wait ~2 minutes for it to start.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <h4>Run the database setup SQL</h4>
-        <p>In Supabase → SQL Editor → paste and run the SQL from the <code>database_setup.sql</code> file included with this download.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <h4>Get your credentials</h4>
-        <p>Go to Project Settings → API → copy your <code>Project URL</code> and <code>anon public</code> key below.</p>
-      </div>
-    </div>
-    <div class="fg"><label>Supabase Project URL</label><input type="text" id="sw_url" placeholder="https://xxxxxxxxxxxx.supabase.co"></div>
-    <div class="fg"><label>Supabase Anon Key</label><input type="text" id="sw_key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
-    <div id="sw_err" class="err-msg"></div>
-    <button class="btn" onclick="saveSupabaseConfig()" style="margin-top:8px;">Connect & Continue →</button>
-  </div>
-</div>
+<!-- Setup screen removed - credentials hardcoded -->
 
 <!-- ══ LOGIN ══ -->
 <div id="loginScreen">
@@ -519,11 +487,6 @@ let charts={}, cachedConfig=null;
 // INIT
 // ══════════════════════════════════════════════════════
 window.onload = async () => {
-  if (!SB_URL || !SB_KEY) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('setupScreen').classList.add('open');
-    return;
-  }
   await initApp();
 };
 
@@ -561,31 +524,7 @@ function fillLoginBranches(cfg) {
 }
 
 // ══════════════════════════════════════════════════════
-// SETUP WIZARD
-// ══════════════════════════════════════════════════════
-async function saveSupabaseConfig() {
-  const url = document.getElementById('sw_url').value.trim().replace(/\/$/, '');
-  const key = document.getElementById('sw_key').value.trim();
-  const err = document.getElementById('sw_err');
-  if (!url || !key) { err.textContent = 'Both fields are required.'; return; }
-  if (!url.startsWith('https://')) { err.textContent = 'URL must start with https://'; return; }
-  SB_URL = url; SB_KEY = key;
-  localStorage.setItem('itp_sb_url', url);
-  localStorage.setItem('itp_sb_key', key);
-  err.textContent = '';
-  try {
-    await getConfig();
-    document.getElementById('setupScreen').classList.remove('open');
-    document.getElementById('loginScreen').style.display = 'flex';
-    await initApp();
-    showToast('✅ Connected to Supabase successfully!');
-  } catch(e) {
-    err.textContent = 'Connection failed. Check your URL and key, and make sure you ran the SQL setup.';
-    SB_URL = ''; SB_KEY = '';
-    localStorage.removeItem('itp_sb_url');
-    localStorage.removeItem('itp_sb_key');
-  }
-}
+// Credentials hardcoded — setup wizard removed
 
 // ══════════════════════════════════════════════════════
 // LOGIN
@@ -1174,9 +1113,7 @@ async function delBr(i){
   cfg.branches.splice(i,1);await saveConfig(cfg);cachedConfig=cfg;renderSettings();
 }
 function resetConnection(){
-  if(!confirm('This will disconnect from Supabase and show the setup screen. Continue?'))return;
-  localStorage.removeItem('itp_sb_url');localStorage.removeItem('itp_sb_key');
-  location.reload();
+  showToast('Credentials are hardcoded in the file. Edit index.html to change them.','warn');
 }
 
 // ══════════════════════════════════════════════════════
