@@ -718,7 +718,46 @@ async function renderBranchForm() {
         <div class="form-row">
           <div class="fg">
             <label>Insurance Company <span class="req-star">*</span></label>
-            <input type="text" id="f_ins_co" placeholder="e.g. Daman, AXA, ADNIC, Oman Insurance...">
+            <select id="f_ins_co" onchange="onInsCoChange()">
+              <option value="">-- Select Company --</option>
+              <option>ADNIC (Abu Dhabi National Insurance)</option>
+              <option>Aetna</option>
+              <option>Al Buhaira National Insurance</option>
+              <option>Al Madallah</option>
+              <option>Al Sagr National Insurance</option>
+              <option>Alliance Insurance</option>
+              <option>Allianz Care</option>
+              <option>AXA Gulf</option>
+              <option>BUPA Arabia</option>
+              <option>Cigna</option>
+              <option>Daman</option>
+              <option>Dubai Insurance</option>
+              <option>Dubai National Insurance (DNIRC)</option>
+              <option>Enaya</option>
+              <option>Emirates Insurance</option>
+              <option>GIG Gulf</option>
+              <option>Globality Health</option>
+              <option>INAYAH</option>
+              <option>Islamic Arab Insurance (Salama)</option>
+              <option>Mednet</option>
+              <option>MetLife</option>
+              <option>MSH International</option>
+              <option>NAS</option>
+              <option>Neuron</option>
+              <option>Nextcare</option>
+              <option>NGI (National General Insurance)</option>
+              <option>Oman Insurance (Sukoon)</option>
+              <option>Orient Insurance</option>
+              <option>Oriental Insurance</option>
+              <option>Qatar Insurance (QIC)</option>
+              <option>SYCO</option>
+              <option>Union Insurance</option>
+              <option>Watania Takaful</option>
+              <option value="Other">Other (not listed)</option>
+            </select>
+            <div id="ins_co_other_wrap" style="display:none;margin-top:8px;">
+              <input type="text" id="f_ins_co_other" placeholder="Type the insurance company name...">
+            </div>
           </div>
           <div class="fg">
             <label>Preferred Insurance Type <span class="req-star">*</span></label>
@@ -782,6 +821,18 @@ async function renderBranchForm() {
   window._dynYN = {};
 }
 
+function onInsCoChange() {
+  const val = document.getElementById('f_ins_co').value;
+  const wrap = document.getElementById('ins_co_other_wrap');
+  if (val === 'Other') {
+    wrap.style.display = '';
+    setTimeout(() => document.getElementById('f_ins_co_other').focus(), 50);
+  } else {
+    wrap.style.display = 'none';
+    document.getElementById('f_ins_co_other').value = '';
+  }
+}
+
 function setPurchase(v) {
   window._purchase = v;
   document.querySelectorAll('#pgBranchForm .avail-toggle .avail-btn').forEach(b => b.classList.remove('on'));
@@ -814,7 +865,9 @@ async function submitInquiry() {
   const phone  = document.getElementById('f_phone').value.trim();
   const eid    = document.getElementById('f_eid').value.trim();
   const loc    = document.getElementById('f_location').value;
-  const insCo  = document.getElementById('f_ins_co').value.trim();
+  const insCoSel = document.getElementById('f_ins_co').value;
+  const insCoOther = document.getElementById('f_ins_co_other')?.value.trim() || '';
+  const insCo  = insCoSel === 'Other' ? insCoOther : insCoSel;
   const insTyp = document.getElementById('f_ins_type').value;
   const empNm  = document.getElementById('f_employer').value.trim();
   const empLoc = document.getElementById('f_emp_location').value;
@@ -828,7 +881,8 @@ async function submitInquiry() {
   if (!phone)  { err.textContent = 'Phone number is required.'; return; }
   if (!eid)    { err.textContent = 'Emirates ID is required.'; return; }
   if (!loc)    { err.textContent = 'Please select customer location.'; return; }
-  if (!insCo)  { err.textContent = 'Insurance company name is required.'; return; }
+  if (!insCoSel) { err.textContent = 'Please select an insurance company.'; return; }
+  if (insCoSel === 'Other' && !insCoOther) { err.textContent = 'Please type the insurance company name.'; return; }
   if (!insTyp) { err.textContent = 'Please select preferred insurance type.'; return; }
   if (!purch)  { err.textContent = 'Please select Yes or No for purchase possibility.'; return; }
   if (purch === 'no' && !reason) { err.textContent = 'Please enter the reason for not purchasing.'; return; }
@@ -1282,7 +1336,7 @@ const CORE_FIELDS = [
   {id:'cf_phone',   label:'Phone Number',               type:'text',   required:true,  placeholder:'e.g. 050 123 4567',       width:'half', deletable:false},
   {id:'cf_eid',     label:'Emirates ID Number',         type:'text',   required:true,  placeholder:'784-XXXX-XXXXXXX-X',      width:'half', deletable:false},
   {id:'cf_loc',     label:'Customer Location',          type:'select', required:true,  placeholder:'Emirates dropdown',       width:'half', deletable:false},
-  {id:'cf_insco',   label:'Insurance Company',          type:'text',   required:true,  placeholder:'e.g. Daman, AXA, ADNIC',  width:'half', deletable:false},
+  {id:'cf_insco',   label:'Insurance Company',          type:'select', required:true,  placeholder:'Dropdown + Other option',  width:'half', deletable:false},
   {id:'cf_instype', label:'Preferred Insurance Type',   type:'select', required:true,  placeholder:'Direct/Reimbursement/Both',width:'half',deletable:false},
   {id:'cf_purch',   label:'Can Purchase Under Network', type:'yesno',  required:true,  placeholder:'',                        width:'full', deletable:false},
   {id:'cf_reason',  label:'Reason (if No)',             type:'textarea',required:false, placeholder:'Shown only when No',     width:'full', deletable:false},
